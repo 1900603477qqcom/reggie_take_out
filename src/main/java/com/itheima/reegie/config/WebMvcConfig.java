@@ -2,6 +2,8 @@ package com.itheima.reegie.config;
 
 import com.itheima.reegie.common.JacksonObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.reactive.filter.OrderedHiddenHttpMethodFilter;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -17,6 +19,12 @@ import java.util.List;
 @Slf4j
 @Configuration  //标记这个类是被spring管理的bean（配置类）
 public class WebMvcConfig extends WebMvcConfigurationSupport {
+
+    //配置OrderedHiddenHttpMethodFilter
+//    @Bean
+//    public OrderedHiddenHttpMethodFilter hiddenHttpMethodFilter() {
+//        return new OrderedHiddenHttpMethodFilter();
+//    }
 
     @Override
     protected void addResourceHandlers(ResourceHandlerRegistry registry) {

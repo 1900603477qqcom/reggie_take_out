@@ -1,6 +1,7 @@
 package com.itheima.reegie.filter;
 
 import com.alibaba.fastjson.JSON;
+import com.itheima.reegie.common.BaseContext;
 import com.itheima.reegie.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.AntPathMatcher;
@@ -27,6 +28,9 @@ public class LoginCheckFilter implements Filter {
         //1、获取本次请求URI
         String requestURI = request.getRequestURI();// /backend/index.html
         log.info("拦截到请求：{}", requestURI);
+        //     获取当前线程id
+        long id = Thread.currentThread().getId();
+        log.info("线程id为：{}",id);
         //定义不需要处理的请求路径
         String[] urls = new String[]{
                 "/employee/login",
@@ -46,6 +50,10 @@ public class LoginCheckFilter implements Filter {
         //4、判断登录状态，如果已登录，则直接放行
         if (request.getSession().getAttribute("employee") != null) {
             log.info("用户已登录，用户ID为：{}", request.getSession().getAttribute("employee"));
+//            获取HttpSession中的登 录用户信息, 调用BaseContext的setCurrentId方法将当前登录用户ID存入ThreadLocal。(用于改造成动态获取当前登录用户的id。)
+            Long empId  = (Long) request.getSession().getAttribute("employee");
+            BaseContext.setCurrentId(empId);
+
             filterChain.doFilter(request, response);
             return;
         }
