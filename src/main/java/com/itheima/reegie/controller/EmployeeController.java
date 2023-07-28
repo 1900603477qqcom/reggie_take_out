@@ -7,15 +7,14 @@ import com.itheima.reegie.entity.Employee;
 import com.itheima.reegie.service.EmployeeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 @Slf4j
 @RestController //标记这个类能映射响应
-@Controller
 @RequestMapping("/employee") //映射的响应路径(无请求方法要求)
 public class EmployeeController {
     @Autowired //自动注入
@@ -41,7 +40,10 @@ public class EmployeeController {
          * 使用LambdaQueryWrapper，你可以通过链式调用方法来构建查询条件，而无需手动编写SQL语句。
          * 它支持的方法包括等值条件、模糊查询、范围查询、排序、分页等，可以满足大多数常见的查询需求。
          * */
+        //2.1 创建查询对象
         LambdaQueryWrapper<Employee> queryWrapper = new LambdaQueryWrapper<>();
+        //2.2 添加过滤查询条件，根据用户名查询用户对象
+        //select * from employee where username = ?
         queryWrapper.eq(Employee::getUsername, employee.getUsername());
         Employee emp = employeeService.getOne(queryWrapper);
 
@@ -57,21 +59,23 @@ public class EmployeeController {
         if (emp.getStatus() == 0) {
             return R.error("账号已被禁用");
         }
-        //6、登录成功，将员工id存入Session并返回登录成功结果
-        request.getSession().setAttribute("employee", emp.getId());
+        //6. 启用状态，保存当前登录的用户信息到session中
+        HttpSession session = request.getSession();
+        session.setAttribute("employee",emp);
+        //7. 返回登录成功
         return R.success(emp);
     }
 
     /**
      * 员工退出
      *
-     * @param request
+     * @param session
      * @return
      */
     @PostMapping("/logout")
-    public R<String> logout(HttpServletRequest request) {
+    public R<String> logout(HttpSession session) {
         //清理Session中保存的当前登录员工的id
-        request.getSession().removeAttribute("employee");
+        session.removeAttribute("employee");
         return R.success("退出成功");
     }
 
@@ -82,11 +86,13 @@ public class EmployeeController {
      * @return
      */
     @PostMapping("/add")
-    public R<String> save(HttpServletRequest request, @RequestBody Employee employee) {
+    public R<String> save(HttpSession session, @RequestBody Employee employee) {
         log.info("新增员工，员工信息：{}", employee.toString());
 
-        //设置初始密码123456，需要进行md5加密处理
-        employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
+        //1. 补全用户信息
+        //1.1 补全密码 默认初始密码123456
+        String password = DigestUtils.md5DigestAsHex("123456".getBytes());
+        employee.setPassword(password);
 
 //        employee.setCreateTime(LocalDateTime.now());
 //        employee.setUpdateTime(LocalDateTime.now());
@@ -96,8 +102,9 @@ public class EmployeeController {
 //
 //        employee.setCreateUser(empId);
 //        employee.setUpdateUser(empId);
-
+//2. 保存当前用户信息到数据库
         employeeService.save(employee);
+        //3. 返回保存成功信息到前端页面
         return R.success("新增员工成功");
     }
 
@@ -120,7 +127,7 @@ public class EmployeeController {
         //添加过滤条件
         queryWrapper.like(name != null, Employee::getName, name);   // 模糊查询
         //添加排序条件
-        queryWrapper.orderByDesc(Employee::getUpdateTime);
+        queryWrapper.orderByDesc(Employee::getUpdateTime);// 根据修改时间进行升序排序
         //执行查询
         employeeService.page(pageInfo, queryWrapper);
         return R.success(pageInfo);
@@ -139,11 +146,11 @@ public class EmployeeController {
         log.info("线程id为：{}",id);
 
         log.info(employee.toString());
-        Long empId = (Long) request.getSession().getAttribute("employee");
+//        Long empId = (Long) request.getSession().getAttribute("employee");
 
 //        employee.setUpdateTime(LocalDateTime.now());
 //        employee.setUpdateUser(empId);
-
+        //2. 执行修改操作
         employeeService.updateById(employee);
         return R.success("员工信息修改成功");
     }

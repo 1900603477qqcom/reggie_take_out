@@ -7,15 +7,15 @@ import com.itheima.reegie.entity.Category;
 import com.itheima.reegie.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 分类管理
  */
 @RestController
 @RequestMapping("/category")
-@Controller
 @Slf4j
 public class CategoryController {
     @Autowired
@@ -41,15 +41,25 @@ public class CategoryController {
 @GetMapping("/page")
     public R<Page> pageR(int page, int pageSize){
 //      分页构造器
-       Page<Category> pageInfo = new Page<>(page,pageSize);
-//       条件构造器
-    LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
-//    添加排序条件，根据sort进行排序
-    queryWrapper.orderByAsc(Category::getSort);
-
-//    分页查询
-    categoryService.page(pageInfo,queryWrapper);
-    return R.success(pageInfo);
+//       Page<Category> pageInfo = new Page<>(page,pageSize);
+////       条件构造器
+//    LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
+////    添加排序条件，根据sort进行排序
+//    queryWrapper.orderByAsc(Category::getSort);
+//
+////    分页查询
+//    categoryService.page(pageInfo,queryWrapper);
+//    return R.success(pageInfo);
+    //1. 创建分页对象
+    Page<Category> categoryPage = new Page<>(page,pageSize);
+    //2. 创建查询条件对象
+    LambdaQueryWrapper<Category> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    lambdaQueryWrapper.orderByAsc(Category::getSort); // 根据排序字段做升序
+    lambdaQueryWrapper.orderByDesc(Category::getUpdateTime); // 根据修改时间做降序
+    //3. 进行查询
+    categoryService.page(categoryPage,lambdaQueryWrapper);
+    //4. 返回查询结果
+    return R.success(categoryPage);
 }
 
 /**
@@ -59,6 +69,10 @@ public class CategoryController {
  */
 @DeleteMapping
     public R<String> delete(Long id){
+    // 因为MybatisPlus提供的业务逻辑方法无法满足我们的需求，所以我们需要自制逻辑删除方法
+    //1. 判断当前分类的id是否关联了菜品，如果有关联，不能被删除，抛出异常，由全局异常处理器处理这个异常信息
+    //2. 判断当前分类信息有没有关联套餐信息，如果有关联，不能被删除，抛出自定义异常，由全局异常处理器来处理异常信息
+    //3. 如果当前分类既没有关联菜品，又没有关联套餐，可以删除
     log.info("删除分类成功，id为：{}",id);
 //    categoryService.removeById(id);
     categoryService.remove(id);
@@ -74,5 +88,21 @@ public class CategoryController {
         log.info("修改分类信息：{}",category);
         categoryService.updateById(category);
         return R.success("修改分类信息成功");
+    }
+    /**
+     * 获取菜品分类列表
+     *
+     * */
+    @GetMapping
+    public R<List<Category>> getCategoryByType(Category category){
+        //1、创建查询对象
+        LambdaQueryWrapper<Category> categoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        //2、添加查询条件
+        categoryLambdaQueryWrapper.eq(category.getType()!=null,Category::getType,category.getType());
+        categoryLambdaQueryWrapper.orderByAsc(Category::getSort).orderByDesc(Category::getUpdateTime);
+        //3、执行查询操作
+        List<Category> categoryList = categoryService.list(categoryLambdaQueryWrapper);
+        //4、返回查询结果
+        return R.success(categoryList);
     }
 }

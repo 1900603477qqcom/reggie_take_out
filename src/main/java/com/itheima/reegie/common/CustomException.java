@@ -1,7 +1,6 @@
 package com.itheima.reegie.common;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 
 /**
  * 自定义业务异常类
@@ -17,9 +16,9 @@ public class CustomException extends RuntimeException{
      * 异常处理方法
      * @return
      */
-    @ExceptionHandler(CustomException.class)
-    public R<String> exceptionHandler(CustomException ex){
-        log.error(ex.getMessage());
-        return R.error(ex.getMessage());
-    }
+//    @ExceptionHandler(CustomException.class)
+//    public R<String> exceptionHandler(CustomException ex){
+//        log.error(ex.getMessage());
+//        return R.error(ex.getMessage());
+//    }
 }
