@@ -2,9 +2,9 @@ package com.itheima.reegie;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
 @Slf4j
@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 其子包下)的@WebServlet , @WebFilter , @WebListener 注解, 自动注册Servlet的
  *   关组件 ;
  */
-
+@EnableTransactionManagement//开启对事物管理的支持
 public class ReggieApplication {
     public static void main(String[] args) {
         SpringApplication.run(ReggieApplication.class,args);
